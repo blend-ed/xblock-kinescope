@@ -1,40 +1,48 @@
 """This XBlock embeds content from Kinescope through Iframes"""
+import json
 
 from django.core.exceptions import ValidationError
+from django.template import Context, Template
 from web_fragments.fragment import Fragment
 from xblock.core import XBlock
-from xblock.fields import Integer, Scope, String
-try:
-    from xblock.utils.studio_editable import StudioEditableXBlockMixin
-except ModuleNotFoundError: # For compatibility with Palm and earlier
-    from xblockutils.studio_editable import StudioEditableXBlockMixin
-try:
-    from xblock.utils.resources import ResourceLoader
-except ModuleNotFoundError: # For compatibility with Palm and earlier
-    from xblockutils.resources import ResourceLoader
-
+from xblock.fields import Scope, String
+from xblock.completable import CompletableXBlockMixin
 from xblock.validation import ValidationMessage
+from webob import Response
+
+try:
+    # Older Open edX releases (Redwood and earlier) install a backported version of
+    # importlib.resources: https://pypi.org/project/importlib-resources/
+    import importlib_resources
+except ModuleNotFoundError:
+    # Starting with Sumac, Open edX drops importlib-resources in favor of the standard library:
+    # https://docs.python.org/3/library/importlib.resources.html#module-importlib.resources
+    from importlib import resources as importlib_resources
 
 from .utils import _, validate_parse_kinescope_url
 
 
-loader = ResourceLoader(__name__)
-
-
-class KinescopeXBlock(StudioEditableXBlockMixin, XBlock):
+@XBlock.wants("settings")
+class KinescopeXBlock(XBlock, CompletableXBlockMixin):
     """
     This XBlock renders Iframe for Kinescope videos.
     """
 
     video_link = String(
         display_name="Video Link/URL",
-        default="",
-        scope=Scope.content,
+        default="aVwcBnvxWCxnHwFCXTrmuC",
+        scope=Scope.settings,
         help=_("Video link copied from Kinescope dashboard.")
     )
 
-    editable_fields = ('display_name', 'video_link')
+    display_name = String(
+        display_name="Display Name",
+        default="Sample Video",
+        scope=Scope.settings,
+        help=_("Display name for the video.")
+    )
 
+    has_author_view = True
 
     def validate_field_data(self, validation, data):
         """
@@ -50,6 +58,19 @@ class KinescopeXBlock(StudioEditableXBlockMixin, XBlock):
                     validation.add(ValidationMessage(ValidationMessage.ERROR, msg))
 
 
+    def render_template(self, template_path, context):
+        template_str = self.resource_string(template_path)
+        template = Template(template_str)
+        return template.render(Context(context))
+
+
+    @staticmethod
+    def resource_string(path):
+        """Handy helper for getting static resources from our kit."""
+        data = importlib_resources.files(__name__).joinpath(path).read_bytes()
+        return data.decode("utf8")
+    
+
     def student_view(self, context=None):
         """
         The primary view of the KinescopeXBlock, shown to students
@@ -58,26 +79,88 @@ class KinescopeXBlock(StudioEditableXBlockMixin, XBlock):
         try:
             video_id = validate_parse_kinescope_url(self.video_link)
         except ValidationError:
+            print(f"Invalid video link: {self.video_link}")
             video_id = ""
-        frag = Fragment(loader.render_django_template("static/html/kinescope.html", context=context))
-        frag.add_css_url(self.runtime.local_resource_url(self, "public/css/kinescope.css"))
-        frag.add_javascript_url(self.runtime.local_resource_url(self, "public/js/kinescope.js"))
-        frag.initialize_js('KinescopeXBlock', {'video_id': video_id})
+
+        context = {
+            'kinescope': self,
+            'video_id': video_id,
+            'display_name': self.display_name,
+        }
+
+        print(f"Context: {context}")
+
+        template = self.render_template("static/html/kinescope.html", context)
+        frag = Fragment(template)
+        frag.add_css(self.resource_string("public/css/kinescope.css"))
+        frag.add_javascript(self.resource_string("public/js/kinescope.js"))
+        frag.initialize_js('KinescopeXBlock')
         return frag
+    
+    def author_view(self, context=None):
+        """
+        The primary view of the KinescopeXBlock, shown to instructors.
+        """
+
+        return self.studio_view(context)
+
+    def studio_view(self, context=None):
+        """
+        The primary view of the KinescopeXBlock, shown to instructors.
+        """
+
+        context = {
+            'kinescope': self,
+            'video_link': self.video_link,
+            'display_name': self.display_name,
+        }
+
+        template = self.render_template("static/html/kinescope_studio.html", context)
+        frag = Fragment(template)
+        frag.add_css(self.resource_string("public/css/kinescope.css"))
+        frag.add_javascript(self.resource_string("public/js/kinescope_studio.js"))
+        frag.initialize_js('KinescopeStudioXBlock')
+        return frag
+
+
+    @staticmethod
+    def json_response(data):
+        return Response(
+            json.dumps(data), content_type="application/json", charset="utf8"
+        )
+    
+
+    @XBlock.handler
+    def studio_submit(self, request, _suffix):
+        """
+        Save the video link and display name
+        """
+        self.video_link = request.params.get('video_link')
+        self.display_name = request.params.get('display_name')
+        
+        return self.json_response({'status': 'success', 'errors': []})
 
 
     @staticmethod
     def workbench_scenarios():
         """A canned scenario for display in the workbench."""
         return [
-            ("KinescopeXBlock",
-             """<kinescope/>
-             """),
-            ("Multiple KinescopeXBlock",
-             """<vertical_demo>
-                <kinescope/>
-                <kinescope/>
+            (
+                "KinescopeXBlock",
+                """<vertical_demo>
                 <kinescope/>
                 </vertical_demo>
-             """),
+             """,
+            ),
         ]
+
+
+    @property
+    def xblock_settings(self):
+        """
+        Return a dict of settings associated to this XBlock.
+        """
+        settings_service = self.runtime.service(self, "settings") or {}
+        if not settings_service:
+            return {}
+        return settings_service.get_settings_bucket(self)

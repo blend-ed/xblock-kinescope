@@ -1,6 +1,6 @@
 /* CSS for KinescopeXBlock */
 
-iframe {
+.kinescope_block iframe {
     position: absolute;
     width: 100%;
     height: 100%;
@@ -12,4 +12,127 @@ iframe {
     position: relative;
     padding-top: 56.25%;
     width: 100%
+}
+
+.kinescope_block .scorm-embedded {
+    border: none;
+}
+.kinescope_block span.setting-input-file {
+    padding-left: 25%;
+    margin-left: 14px;
+    padding-top: 5px;
+}
+.kinescope_block span.setting-input-file span {
+    font-weight: bold;
+}
+.kinescope_block button {
+    height: 35px;
+}
+
+.kinescope_block .scorm-content .scorm-panel {
+    display: flex;
+    flex-direction: row;
+}
+
+.kinescope_block .scorm-content .scorm-panel .scorm-pane {
+    width: 100%;
+}
+
+.kinescope_block.navigation-enabled .scorm-content .scorm-panel .scorm-pane {
+    width: 70%;
+}
+
+.navigation-title:hover {
+    cursor: pointer;
+    text-decoration: underline;
+}
+
+/* Fullscreen */
+.kinescope_block.fullscreen-enabled .scorm-embedded {
+    border: none;
+    overflow: hidden;
+    top: 55px;
+    right: 0;
+    bottom: 0;
+    left: 0;
+    width: 100%;
+    height: calc(100% - 65px);
+    z-index: 10000;
+}
+
+.kinescope_block.fullscreen-enabled.navigation-enabled .scorm-content .scorm-panel .scorm-pane {
+    width: 100%;
+}
+
+.kinescope_block.fullscreen-enabled.navigation-enabled .navigation_pane {
+    border: none;
+    overflow: hidden;
+    top: 55px;
+    right: 0;
+    bottom: 0;
+    left: 0;
+    height: calc(100% - 65px);
+    z-index: 10000;
+}
+
+
+.kinescope_block.fullscreen-enabled .scorm-content {
+    position: fixed;
+    border: none;
+    overflow: hidden;
+    top: 0;
+    right: 0;
+    bottom: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    z-index: 10000;
+    background-color: #ffffff;
+}
+.kinescope_block .fullscreen-controls {
+    padding-bottom: 20px;
+}
+.kinescope_block.fullscreen-enabled .fullscreen-controls {
+    padding: 20px;
+}
+.kinescope_block button.exit-fullscreen {
+    display: none;
+}
+.kinescope_block.fullscreen-enabled button.exit-fullscreen {
+    display: block;
+}
+.kinescope_block.fullscreen-enabled button.enter-fullscreen,
+.kinescope_block.fullscreen-enabled .scorm-reports {
+    display: none;
+}
+
+.scorm-reports {
+    margin-top: 2rem;
+}
+
+/* Popup window */
+.kinescope_block:not(.can-popup) .popup-wrapper {
+    display: none;
+}
+.kinescope_block .popup-wrapper {
+    text-align: center;
+    padding: 20px;
+}
+.kinescope_block.can-popup .fullscreen-controls,
+.kinescope_block.can-popup .scorm-embedded {
+    display: none;
+}
+
+/* Reports */
+.kinescope_block .scorm-reports input {
+    width: 500px;
+}
+.kinescope_block .reports-togglable-off {
+    display: none;
+}
+.report {
+    margin: 1rem 0;
+}
+.reload-report {
+    margin: 0 1rem;
 }
