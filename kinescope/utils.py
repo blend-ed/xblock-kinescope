@@ -32,8 +32,6 @@ def kinescope_list_videos(api_key):
     """
     List all videos from Kinescope account
     """
-    # curl https://api.kinescope.io/v1/videos \                           
-    # -H 'Authorization: Bearer 97183963-55ef-431e-a17f-7466be4a9b1c'
     headers = {
         'Authorization': f'Bearer {api_key}'
     }
