@@ -3,6 +3,7 @@ import json
 
 from django.core.exceptions import ValidationError
 from django.template import Context, Template
+from django.conf import settings
 from web_fragments.fragment import Fragment
 from xblock.core import XBlock
 from xblock.fields import Scope, String, Dict
@@ -22,7 +23,7 @@ except ModuleNotFoundError:
 from .utils import _, validate_parse_kinescope_url, get_video_list
 
 
-api_key = "97183963-55ef-431e-a17f-7466be4a9b1c"
+api_key = settings.KINESCOPE_API_KEY
 
 
 @XBlock.wants("settings")
