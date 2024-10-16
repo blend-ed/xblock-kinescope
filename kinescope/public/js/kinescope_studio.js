@@ -1,11 +1,10 @@
 function KinescopeStudioXBlock(runtime, element) {
 
     var handlerUrl = runtime.handlerUrl(element, 'studio_submit');
-    var uploadUrl = runtime.handlerUrl(element, 'upload_video');
 
     $(element).find('.save-button').bind('click', function() {
         var form_data = new FormData();
-        form_data.append('video_link', $(element).find('input[name=video_link]').val());
+        form_data.append('video_link', $(element).find('select[name=video_link]').val());
         form_data.append('display_name', $(element).find('input[name=display_name]').val());
 
         $(this).addClass("disabled");

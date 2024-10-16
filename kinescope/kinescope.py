@@ -102,8 +102,6 @@ class KinescopeXBlock(XBlock, CompletableXBlockMixin):
                 'video_list': video_list,
             }
 
-        print(f"Video list: {video_list}")
-
         template = self.render_template("static/html/kinescope.html", context)
         frag = Fragment(template)
         frag.add_css(self.resource_string("public/css/kinescope.css"))
