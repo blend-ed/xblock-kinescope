@@ -5,13 +5,23 @@
                 <label class="label setting-label" for="display_name">Display Name</label>
                 <input class="input setting-input" name="display_name" id="display_name" value="{{ kinescope.display_name }}" type="text" />
             </div>
+            <span class="tip setting-help">{{display_name.help}}</span>
         </li>
 
         <li class="field comp-setting-entry is-set">
             <div class="wrapper-comp-setting">
-                <label class="label setting-label" for="video_link">Video Link</label>
-                <input class="input setting-input" name="video_link" id="video_link" value="{{ kinescope.video_link }}" type="text" />
+                <label class="label setting-label" for="video_link">Choose Video</label>
+                <select class="input setting-input" name="video_link" id="video_link">
+                    <option value="">Select Video</option>
+                    {% for video in video_list %}
+                        <option value="{{ video.play_link }}" 
+                            {% if video.play_link == kinescope.video_link %} selected {% endif %}>
+                            {{ video.title }}
+                        </option>
+                    {% endfor %}
+                </select>
             </div>
+            <span class="tip setting-help">{{ video_link.help }}</span>
         </li>
     </ul>
 

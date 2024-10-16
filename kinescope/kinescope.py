@@ -5,7 +5,7 @@ from django.core.exceptions import ValidationError
 from django.template import Context, Template
 from web_fragments.fragment import Fragment
 from xblock.core import XBlock
-from xblock.fields import Scope, String
+from xblock.fields import Scope, String, Dict
 from xblock.completable import CompletableXBlockMixin
 from xblock.validation import ValidationMessage
 from webob import Response
@@ -19,7 +19,10 @@ except ModuleNotFoundError:
     # https://docs.python.org/3/library/importlib.resources.html#module-importlib.resources
     from importlib import resources as importlib_resources
 
-from .utils import _, validate_parse_kinescope_url
+from .utils import _, validate_parse_kinescope_url, get_video_list
+
+
+api_key = "97183963-55ef-431e-a17f-7466be4a9b1c"
 
 
 @XBlock.wants("settings")
@@ -30,14 +33,14 @@ class KinescopeXBlock(XBlock, CompletableXBlockMixin):
 
     video_link = String(
         display_name="Video Link/URL",
-        default="aVwcBnvxWCxnHwFCXTrmuC",
+        default="",
         scope=Scope.settings,
-        help=_("Video link copied from Kinescope dashboard.")
+        help=_("Choose video from the list.")
     )
 
     display_name = String(
         display_name="Display Name",
-        default="Sample Video",
+        default="Kinescope Video",
         scope=Scope.settings,
         help=_("Display name for the video.")
     )
@@ -76,19 +79,29 @@ class KinescopeXBlock(XBlock, CompletableXBlockMixin):
         The primary view of the KinescopeXBlock, shown to students
         when viewing courses.
         """
+        video_list = get_video_list(api_key)
+        
         try:
             video_id = validate_parse_kinescope_url(self.video_link)
         except ValidationError:
             print(f"Invalid video link: {self.video_link}")
             video_id = ""
 
-        context = {
-            'kinescope': self,
-            'video_id': video_id,
-            'display_name': self.display_name,
-        }
+        if video_id == "":
+            context = {
+                'kinescope': self,
+                'display_name': self.display_name,
+                'video_list': video_list,
+            }
+        else:
+            context = {
+                'kinescope': self,
+                'video_id': video_id,
+                'display_name': self.display_name,
+                'video_list': video_list,
+            }
 
-        print(f"Context: {context}")
+        print(f"Video list: {video_list}")
 
         template = self.render_template("static/html/kinescope.html", context)
         frag = Fragment(template)
@@ -102,17 +115,18 @@ class KinescopeXBlock(XBlock, CompletableXBlockMixin):
         The primary view of the KinescopeXBlock, shown to instructors.
         """
 
-        return self.studio_view(context)
+        return self.student_view(context)
 
     def studio_view(self, context=None):
         """
         The primary view of the KinescopeXBlock, shown to instructors.
         """
-
+        video_list = get_video_list(api_key)
         context = {
             'kinescope': self,
-            'video_link': self.video_link,
-            'display_name': self.display_name,
+            'video_link': self.fields['video_link'],
+            'display_name': self.fields['display_name'],
+            'video_list': video_list,
         }
 
         template = self.render_template("static/html/kinescope_studio.html", context)
@@ -138,6 +152,16 @@ class KinescopeXBlock(XBlock, CompletableXBlockMixin):
         self.video_link = request.params.get('video_link')
         self.display_name = request.params.get('display_name')
         
+        return self.json_response({'status': 'success', 'errors': []})
+    
+
+    @XBlock.handler
+    def upload_video(self, request, suffix=''):
+        """
+        Upload video file
+        """
+        video_file = request.params.get('video_file')
+        self.video_file = video_file
         return self.json_response({'status': 'success', 'errors': []})
 
 

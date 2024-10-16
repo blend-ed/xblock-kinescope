@@ -1,9 +1,12 @@
 <div class="kinescope_block">
-    <div class="video_title">
-        <h2>{{display_name}}</h2>
-    </div>
-    <div class="video_wrapper">
-        <iframe class="kinescope_iframe" src="https://kinescope.io/embed/{{video_id}}" allow="autoplay; fullscreen; picture-in-picture; encrypted-media;" frameborder="0" allowfullscreen>
-        </iframe>
-    </div>
+    {% if video_id %}
+        <div class="video_wrapper">
+            <iframe class="kinescope_iframe" src="https://kinescope.io/embed/{{video_id}}" allow="autoplay; fullscreen; picture-in-picture; encrypted-media;" frameborder="0" allowfullscreen>
+            </iframe>
+        </div>
+    {% else %}
+        <div class="video_wrapper">
+            <p>No video available'</p>
+        </div>
+    {% endif %}
 </div>

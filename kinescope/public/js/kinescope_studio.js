@@ -1,6 +1,7 @@
 function KinescopeStudioXBlock(runtime, element) {
 
     var handlerUrl = runtime.handlerUrl(element, 'studio_submit');
+    var uploadUrl = runtime.handlerUrl(element, 'upload_video');
 
     $(element).find('.save-button').bind('click', function() {
         var form_data = new FormData();
